@@ -1,0 +1,335 @@
+---
+title: "STAT547_hw06"
+output: github_document
+---
+#notes: can I use IHDS data to find how many Indian households have motor vehicles? As a proxy for electricity, air conditioner (or is there data for electricity access?) So who can possibly own an electric vehicle?
+
+```{r}
+library(tidyverse)
+library(testthat)
+library(gapminder)
+library(broom)
+```
+
+In code that doesn’t use stringr, you’ll often see paste() and paste0(). What’s the difference between the two functions? What stringr function are they equivalent to? How do the functions differ in their handling of NA?
+
+```{r}
+paste("abc", "def") #concatenates strings, with a default " " separation
+paste("abc", "def", sep = "") #we can specify no separation
+paste0("abc", "def") #alternatively, use this to default to no separation
+```
+
+
+In your own words, describe the difference between the sep and collapse arguments to str_c().
+
+```{r}
+str_c("a fox", "is not a bear", sep = ": ") #sep is useful with two independent strings
+str_c(c("a fox", "is not a bear"), sep = ": ") #sep not so useful with a vector of strings
+str_c(c("a fox", "is not a bear"), collapse = ": ") #collapse puts a vector of strings into one string, and separates by the specified argument
+```
+
+
+Use str_length() and str_sub() to extract the middle character from a string. What will you do if the string has an even number of characters?
+
+```{r}
+x <- "123456789"
+str_sub(x, start = round(str_length(x)/2), end = round(str_length(x)/2))
+
+NOT_COMPLETE
+```
+
+
+What does str_wrap() do? When might you want to use it?
+
+```{r}
+#Generate a paragraph.
+s <- str_c(sentences[[1]], sentences[[2]], sentences[[3]], sep = " ")
+
+#str_wrap formats the text wrapping of the output
+str_wrap(s, width = 30, indent = 5, exdent = 3) %>% writeLines()
+```
+
+What does str_trim() do? What’s the opposite of str_trim()?
+
+```{r}
+str_trim("   Here is a poorly formatted sentence. It has a lot of white space.    ", side = "both")
+#str_trim removes white space from a string, including tab and new lines.
+
+str_pad("Here is a sentence to which I want to add white space.", width = 100)
+#str_pad adds white space (or a specified string) until the width reaches the specified argument.
+#I use 100 because it is longer than the sentence's character count
+```
+
+
+
+Write a function that turns (e.g.) a vector c("a", "b", "c") into the string a, b, and c. Think carefully about what it should do if given a vector of length 0, 1, or 2.
+
+```{r}
+NOT_COMPLETE
+```
+
+
+Explain why each of these strings don’t match a \: "\", "\\", "\\\".
+
+```{r}
+x1 <- c("a\\b", "ab", "\\")
+writeLines(x1)
+
+str_view(x1, pattern = "\") #escapes closing quotation in regex
+str_view(x1, pattern = "\\") #escapes closing quotation in string
+str_view(x1, pattern = "\\\") #escapes closing
+str_view(x1, pattern = "\\\\") #works!
+
+NOT_COMPLETE
+```
+
+
+How would you match the sequence "'\?
+
+```{r}
+x2 <- c("abc", "\"\'\\")
+writeLines(x2)
+
+str_view(x2, "\"\'\\\\")
+```
+
+
+What patterns will the regular expression \\..\\..\\.. match? How would you represent it as a string?
+
+```{r}
+x3 <- c("abc123", ".a.b.c", "......", ".\\.\\.\\")
+str_view_all(x3, pattern = "\\..\\..\\..")
+#"\\.." as a regex finds a literal dot, then anything. Repeat thrice.
+```
+
+
+How would you match the literal string "$^$"?
+
+```{r}
+str_view("$^$", pattern = "\\$\\^\\$")
+#similar to finding a literal dot, need two backslashes
+```
+
+
+Given the corpus of common words in stringr::words, create regular expressions that find all words that:
+
+Start with “y”.
+End with “x”
+Are exactly three letters long. (Don’t cheat by using str_length()!)
+Have seven letters or more.
+Since this list is long, you might want to use the match argument to str_view() to show only the matching or non-matching words.
+
+```{r}
+str_view(words, "^y", match = TRUE)
+str_view(words, "x$", match = TRUE)
+str_view(words, "^...$", match = TRUE)
+str_view(words, "^.......", match = TRUE)
+```
+
+Create regular expressions to find all words that:
+
+```{r}
+wordSet <- c("alphabet", "Pangea", "zebra", "STAT547", "escape", "tweed", "bed", "wise", "thing")
+
+#Start with a vowel.
+str_view(wordSet, pattern = "^[aeiou]", match = TRUE)
+
+#That only contain consonants. (Hint: thinking about matching “not”-vowels.)
+str_view(wordSet, pattern = "^[^aeiou]", match = TRUE)
+
+#End with ed, but not with eed.
+str_view(wordSet, pattern = "[^e]ed$", match = TRUE)
+
+#End with ing or ise.
+str_view(wordSet, pattern = "(ing)|(ise)$", match = TRUE)
+
+#Empirically verify the rule “i before e except after c”.
+str_view(words, pattern = "(cie)|(cei)", match = TRUE)
+
+#Is “q” always followed by a “u”?
+str_view(words, pattern = "q[^u]", match = TRUE)
+
+```
+
+
+Write a regular expression that matches a word if it’s probably written in British English, not American English.
+
+```{r}
+#look for words that end in "re" (instead of "er" in American English)
+#exclude words that have vowels before "re"
+str_view(words, pattern = "[^aeiou]re$", match = TRUE)
+```
+
+
+Create a regular expression that will match telephone numbers as commonly written in your country
+
+```{r}
+phoneNumbers <- c("1-800-123-4567", "604-123-4567", "911", "0123456789")
+
+str_view(phoneNumbers, pattern = "^\\d\\d\\d\\-\\d\\d\\d\\-\\d\\d\\d\\d$")
+```
+Describe the equivalents of ?, +, * in {m,n} form.
+
+```{r}
+x3 <- c("aaa", "aab", "aaaabb", "b")
+
+#equivalent to '?'
+str_view(x3, "a{0,1}")
+
+#equivalent to '+'
+str_view(x3, "b{1,}")
+
+#equivalent to '*'
+str_view(x3, "a{0,}")
+```
+
+
+Describe in words what these regular expressions match: (read carefully to see if I’m using a regular expression or a string that defines a regular expression.)
+
+```{r}
+# regex ^.*$
+str_view("aa", "^.*$")
+
+# string "\\{.+\\}"
+str_view("\\{.+\\}", "\\\\\\{\\.\\+\\\\\\}")
+
+# regex \d{4}-\d{2}-\d{2}
+str_view("1234-56-78", "\\d{4}-\\d{2}-\\d{2}")
+
+# string "\\\\{4}"
+str_view("\\\\{4}", "\\\\\\\\\\{\\d\\}")
+
+```
+
+Create regular expressions to find all words that:
+
+```{r}
+x4 <- c("zxcv", "uiop", "Aei", "apart")
+
+#Start with three consonants.
+str_view(x4, "^[^aeiou][^aeiou][^aeiou]")
+
+#Have three or more vowels in a row.
+str_view(x4, "[AEIOUaeiou][aeiou][aeiou]")
+
+#Have two or more vowel-consonant pairs in a row.
+str_view(x4, "([AEIOUaeiou][^aeiou][aeiou][^aeiou])")
+
+```
+
+Describe, in words, what these expressions will match:
+
+string: (.)\1\1
+*Open parenthesis, dot, close parenthesis*
+
+regex: "(.)(.)\\2\\1"
+*Match any two characters, repeat second one, repeat first one*
+
+string: (..)\1
+*Open parenthesis, two dots, close parenthesis*
+
+regex: "(.).\\1.\\1"
+*Match any character, follow by any character, repeat match, any character, repeat match*
+
+regex: "(.)(.)(.).*\\3\\2\\1"
+*Match any three characters, any character once or no character, repeat third match, repeat second match, repeat first match*
+
+
+Construct regular expressions to match words that:
+
+```{r}
+#Start and end with the same character.
+str_view("racecar", "^(.).{0,}\\1$")
+
+#Contain a repeated pair of letters
+str_view("church", "(.)(.).{0,}\\1\\2")
+
+#Contain one letter repeated in at least three places
+str_view("eleven", "(.).{0,}\\1.{0,}\\1")
+```
+
+For each of the following challenges, try solving it by using both a single regular expression, and a combination of multiple str_detect() calls.
+
+```{r}
+x5 <- c("xylophone", "box", "ball", "aardvark")
+
+#Find all words that start or end with x.
+expect_equal(sum(str_detect(x5, "^x|x$")),
+         sum(str_detect(x5, "^x"), str_detect(x5, "x$"))
+         )
+
+
+#Find all words that start with a vowel and end with a consonant.
+#expect_equal(sum(str_detect(x5, "^[aeiou].+[^aeiou]$")),
+ #            sum(if(str_detect(x5, "^[aeiou]") & str_detect(x5, "[^aeiou]$")
+  #                  )
+   #            )
+#)
+NOT_COMPLETE            
+
+#Are there any words that contain at least one of each different vowel?
+
+
+```
+
+What word has the highest number of vowels? What word has the highest proportion of vowels? (Hint: what is the denominator?)
+
+```{r}
+df <- tibble(word = words)
+df %>% 
+  mutate("vowels" = str_count(words, "[aeiou]"))
+
+NOT_COMPLETE
+```
+
+```{r}
+colours <- c(" red", " orange", " yellow", " green", " blue", " purple")
+(colour_match <- str_c(colours, collapse = "|"))
+
+(has_colour <- str_subset(sentences, colour_match))
+(matches <- str_extract(has_colour, colour_match))
+
+more <- sentences[str_count(sentences, colour_match) > 1]
+str_view_all(more, colour_match)
+```
+
+From the Harvard sentences data, extract:
+```{r}
+y <- sentences[1]
+(sentence <- str_split(y, " "))
+#str_view(sentence, "ing")
+
+#All words ending in ing.
+#All plurals.
+```
+
+# EXERCISE 2
+
+```{r}
+
+linearFit <- function(A, x, y) {
+  fit <- lm(A[[x]] ~ A[[y]], data = A) %>% 
+    glance()
+  fit$r.squared
+}
+
+linearFit2 <- function(A) {
+  fit <- lm(lifeExp ~ I(year - 1952), data = A)
+}
+
+#linearFit2(gap_nest$data[[1]])
+#linearFit(gap_nest$data[[1]], "lifeExp", "year")
+
+gap_nest <- gapminder %>% nest(-country)
+
+gap_fit <- gap_nest %>% mutate(fit = map(gap_nest$data, linearFit2))
+
+gap_tidy <- gap_fit %>% mutate(tidy = map(gap_fit$fit, tidy))
+
+(gap_coefs <- gap_tidy %>% select(country, tidy) %>% unnest())
+
+```
+
+
+#references
+https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
