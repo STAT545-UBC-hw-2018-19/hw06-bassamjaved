@@ -283,7 +283,7 @@ NOT_COMPLETE
 ```
 
 ```{r}
-colours <- c(" red", " orange", " yellow", " green", " blue", " purple")
+(colours <- c(" red", " orange", " yellow", " green", " blue", " purple"))
 (colour_match <- str_c(colours, collapse = "|"))
 
 (has_colour <- str_subset(sentences, colour_match))
@@ -310,7 +310,6 @@ y <- sentences[1]
 linearFit <- function(A, x, y) {
   fit <- lm(A[[x]] ~ A[[y]], data = A) %>% 
     glance()
-  fit$r.squared
 }
 #***************
 
@@ -320,8 +319,8 @@ linearFit2 <- function(A) {
     glance()
 }
 
-#linearFit2(gap_nest$data[[1]])
-#linearFit(gap_nest$data[[1]], "lifeExp", "year")
+(linearFit2(gap_nest$data[1:2]))
+#(linearFit(gap_nest[1:2], "lifeExp", "year"))
 
 #Nest gapminder data by country
 gap_nest <- gapminder %>% nest(-country)
@@ -336,37 +335,24 @@ gap_nest <- gapminder %>% nest(-country)
   select(country, r.squared)
 )
 
-#Check for countries with less than 50% r.squared value
-filter(gap_Rsq, r.squared < 0.5)
-filter(gap_Rsq, r.squared < 0.05)
+#Check for countries with less than 10% r.squared value
+filter(gap_Rsq, r.squared < 0.1)
 
+#Create a character string for countries that match <10% r.squared value
+poor_matches <- filter(gap_Rsq, r.squared < 0.1) %>% 
+  select(country) %>% 
+  #lapply(., as.character) %>% 
+  unlist() %>% 
+  paste(collapse = "|")
+
+#Plot the countries with low r.squared values
 gap_nest %>% unnest() %>%
-  filter(country == "Lesotho" | country == "Swaziland") %>% 
+  filter(grepl(poor_matches, country)) %>% 
   ggplot(aes(year, lifeExp)) +
     geom_point() +
     geom_smooth(method = lm, se = FALSE) +
     facet_wrap(~country) +
     theme_classic()
-
-#Remove pre-1992 data from Lesotho and fit linear regression
-lesothoPre1992 <- gapminder %>% 
-  filter(country == "Lesotho") %>% 
-  filter(year < 1992) %>% 
-  nest(-country)
-
-lesothoPre1992 %>% 
-  mutate(fit = map(lesothoPre1992$data, linearFit2)) %>%
-  select(country, fit) %>%
-  unnest() %>% 
-  select(country, r.squared)
-
-lesothoPre1992 %>% 
-  unnest() %>% 
-  ggplot(aes(year, lifeExp)) + 
-    geom_point() +
-    geom_smooth(method = lm, se = FALSE) +
-    theme_classic()
-
 
 ```
 
@@ -380,15 +366,19 @@ quadFit2 <- function(A) {
 
 gap_nest <- gapminder %>% nest(-country)
 
-(gap_fitQ <- gap_nest %>% mutate(fit = map(gap_nest$data, quadFit2)))
+gap_fitQ <- gap_nest %>% mutate(fit = map(gap_nest$data, quadFit2))
 
-(gap_RsqQ <- gap_fitQ %>% 
+gap_RsqQ <- gap_fitQ %>% 
     select(country, fit) %>% 
     unnest() %>% 
   select(country, r.squared)
-)
 
-filter(gap_RsqQ, r.squared < 0.5)
+#Compare r.squared values of quadratic vs. linear regression
+gap_compare <- gap_RsqQ %>% filter(grepl(poor_matches, country)) %>% 
+  left_join(gap_Rsq, by = "country") %>% 
+  rename("r.squared\n(quadratic)" = "r.squared.x",
+         "r.squared\n(linear)" = "r.squared.y")
+gap_compare
 ```
 
 
@@ -396,4 +386,4 @@ filter(gap_RsqQ, r.squared < 0.5)
 https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
 https://www.theanalysisfactor.com/r-tutorial-4/
 http://stat545.com/block012_function-regress-lifeexp-on-year.html
-
+https://awakeningdatascientist.wordpress.com/2015/07/20/r-of-the-day-grep-and-grepl/
