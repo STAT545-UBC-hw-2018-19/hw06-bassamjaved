@@ -1,8 +1,8 @@
 ---
 title: "STAT547_hw06"
 output: github_document
+always_allow_html: yes
 ---
-#notes: can I use IHDS data to find how many Indian households have motor vehicles? As a proxy for electricity, air conditioner (or is there data for electricity access?) So who can possibly own an electric vehicle?
 
 ```{r}
 library(tidyverse)
@@ -11,47 +11,32 @@ library(gapminder)
 library(broom)
 ```
 
-In code that doesn’t use stringr, you’ll often see paste() and paste0(). What’s the difference between the two functions? What stringr function are they equivalent to? How do the functions differ in their handling of NA?
+# (1) Character data
+
+For this prompt, I have selected some exercises from [R for Data Science](https://r4ds.had.co.nz/strings.html#other-types-of-pattern). I will subdivide this into three sections. (A) Miscellaneous exercises and (B) *Regular expressions* exercises, both from **R for Data Science**, and (C) A practical application of regex.
+
+## (1-A) Miscellaneous
 
 ```{r}
-paste("abc", "def") #concatenates strings, with a default " " separation
-paste("abc", "def", sep = "") #we can specify no separation
-paste0("abc", "def") #alternatively, use this to default to no separation
-```
+#Describe the difference between the sep and collapse arguments to str_c().
 
-
-In your own words, describe the difference between the sep and collapse arguments to str_c().
-
-```{r}
 str_c("a fox", "is not a bear", sep = ": ") #sep is useful with two independent strings
 str_c(c("a fox", "is not a bear"), sep = ": ") #sep not so useful with a vector of strings
 str_c(c("a fox", "is not a bear"), collapse = ": ") #collapse puts a vector of strings into one string, and separates by the specified argument
 ```
 
-
-Use str_length() and str_sub() to extract the middle character from a string. What will you do if the string has an even number of characters?
-
 ```{r}
-x <- "123456789"
-str_sub(x, start = round(str_length(x)/2), end = round(str_length(x)/2))
+#What does str_wrap() do? When might you want to use it?
 
-NOT_COMPLETE
-```
-
-
-What does str_wrap() do? When might you want to use it?
-
-```{r}
-#Generate a paragraph.
-s <- str_c(sentences[[1]], sentences[[2]], sentences[[3]], sep = " ")
+s <- str_c(sentences[[1]], sentences[[2]], sentences[[3]], sep = " ") #Random paragraph
 
 #str_wrap formats the text wrapping of the output
 str_wrap(s, width = 30, indent = 5, exdent = 3) %>% writeLines()
 ```
 
-What does str_trim() do? What’s the opposite of str_trim()?
-
 ```{r}
+#What does str_trim() do? What’s the opposite of str_trim()?
+
 str_trim("   Here is a poorly formatted sentence. It has a lot of white space.    ", side = "both")
 #str_trim removes white space from a string, including tab and new lines.
 
@@ -60,76 +45,52 @@ str_pad("Here is a sentence to which I want to add white space.", width = 100)
 #I use 100 because it is longer than the sentence's character count
 ```
 
-
-
-Write a function that turns (e.g.) a vector c("a", "b", "c") into the string a, b, and c. Think carefully about what it should do if given a vector of length 0, 1, or 2.
+## (1-B) Regular Expressions
 
 ```{r}
-NOT_COMPLETE
+#How would you match the sequence "'\?
+x <- "\"\'\\"
+str_view(x, "\"\'\\\\")
 ```
 
-
-Explain why each of these strings don’t match a \: "\", "\\", "\\\".
-
 ```{r}
-x1 <- c("a\\b", "ab", "\\")
-writeLines(x1)
+#What patterns will the regular expression \\..\\..\\.. match? How would you represent it as a string?
 
-str_view(x1, pattern = "\") #escapes closing quotation in regex
-str_view(x1, pattern = "\\") #escapes closing quotation in string
-str_view(x1, pattern = "\\\") #escapes closing
-str_view(x1, pattern = "\\\\") #works!
-
-NOT_COMPLETE
-```
-
-
-How would you match the sequence "'\?
-
-```{r}
-x2 <- c("abc", "\"\'\\")
-writeLines(x2)
-
-str_view(x2, "\"\'\\\\")
-```
-
-
-What patterns will the regular expression \\..\\..\\.. match? How would you represent it as a string?
-
-```{r}
-x3 <- c("abc123", ".a.b.c", "......", ".\\.\\.\\")
-str_view_all(x3, pattern = "\\..\\..\\..")
+x1 <- c("abc123", ".a.b.c", "......", ".\\.\\.\\")
+str_view_all(x1, pattern = "\\..\\..\\..")
 #"\\.." as a regex finds a literal dot, then anything. Repeat thrice.
 ```
 
 
-How would you match the literal string "$^$"?
-
 ```{r}
+#How would you match the literal string "$^$"?
+
 str_view("$^$", pattern = "\\$\\^\\$")
 #similar to finding a literal dot, need two backslashes
 ```
 
 
-Given the corpus of common words in stringr::words, create regular expressions that find all words that:
-
-Start with “y”.
-End with “x”
-Are exactly three letters long. (Don’t cheat by using str_length()!)
-Have seven letters or more.
-Since this list is long, you might want to use the match argument to str_view() to show only the matching or non-matching words.
-
 ```{r}
+#Given the corpus of common words in stringr::words, create regular expressions that find all words that:
+
+#Start with “y”.
 str_view(words, "^y", match = TRUE)
+
+#End with “x”
 str_view(words, "x$", match = TRUE)
+
+#Are exactly three letters long.
 str_view(words, "^...$", match = TRUE)
+
+#Have seven letters or more.
 str_view(words, "^.......", match = TRUE)
 ```
 
-Create regular expressions to find all words that:
 
 ```{r}
 wordSet <- c("alphabet", "Pangea", "zebra", "STAT547", "escape", "tweed", "bed", "wise", "thing")
+
+#Create regular expressions to find all words that:
 
 #Start with a vowel.
 str_view(wordSet, pattern = "^[aeiou]", match = TRUE)
@@ -151,42 +112,42 @@ str_view(words, pattern = "q[^u]", match = TRUE)
 
 ```
 
-
-Write a regular expression that matches a word if it’s probably written in British English, not American English.
-
 ```{r}
+#Write a regular expression that matches a word if it’s probably written in British English, not American English.
+
 #look for words that end in "re" (instead of "er" in American English)
 #exclude words that have vowels before "re"
 str_view(words, pattern = "[^aeiou]re$", match = TRUE)
 ```
 
 
-Create a regular expression that will match telephone numbers as commonly written in your country
-
 ```{r}
+#Create a regular expression that will match telephone numbers as commonly written in your country
+
 phoneNumbers <- c("1-800-123-4567", "604-123-4567", "911", "0123456789")
 
 str_view(phoneNumbers, pattern = "^\\d\\d\\d\\-\\d\\d\\d\\-\\d\\d\\d\\d$")
 ```
-Describe the equivalents of ?, +, * in {m,n} form.
 
 ```{r}
-x3 <- c("aaa", "aab", "aaaabb", "b")
+#Describe the equivalents of ?, +, * in {m,n} form.
+
+x2 <- c("aaa", "aab", "aaaabb", "b")
 
 #equivalent to '?'
-str_view(x3, "a{0,1}")
+str_view(x2, "a{0,1}")
 
 #equivalent to '+'
-str_view(x3, "b{1,}")
+str_view(x2, "b{1,}")
 
 #equivalent to '*'
-str_view(x3, "a{0,}")
+str_view(x2, "a{0,}")
 ```
 
 
-Describe in words what these regular expressions match: (read carefully to see if I’m using a regular expression or a string that defines a regular expression.)
-
 ```{r}
+#Describe in words what these regular expressions match:
+
 # regex ^.*$
 str_view("aa", "^.*$")
 
@@ -201,43 +162,26 @@ str_view("\\\\{4}", "\\\\\\\\\\{\\d\\}")
 
 ```
 
-Create regular expressions to find all words that:
 
 ```{r}
-x4 <- c("zxcv", "uiop", "Aei", "apart")
+#Create regular expressions to find all words that
+
+x3 <- c("zxcv", "uiop", "Aei", "apart")
 
 #Start with three consonants.
-str_view(x4, "^[^aeiou][^aeiou][^aeiou]")
+str_view(x3, "^[^aeiou][^aeiou][^aeiou]")
 
 #Have three or more vowels in a row.
-str_view(x4, "[AEIOUaeiou][aeiou][aeiou]")
+str_view(x3, "[AEIOUaeiou][aeiou][aeiou]")
 
 #Have two or more vowel-consonant pairs in a row.
-str_view(x4, "([AEIOUaeiou][^aeiou][aeiou][^aeiou])")
+str_view(x3, "([AEIOUaeiou][^aeiou][aeiou][^aeiou])")
 
 ```
 
-Describe, in words, what these expressions will match:
-
-string: (.)\1\1
-*Open parenthesis, dot, close parenthesis*
-
-regex: "(.)(.)\\2\\1"
-*Match any two characters, repeat second one, repeat first one*
-
-string: (..)\1
-*Open parenthesis, two dots, close parenthesis*
-
-regex: "(.).\\1.\\1"
-*Match any character, follow by any character, repeat match, any character, repeat match*
-
-regex: "(.)(.)(.).*\\3\\2\\1"
-*Match any three characters, any character once or no character, repeat third match, repeat second match, repeat first match*
-
-
-Construct regular expressions to match words that:
-
 ```{r}
+#Construct regular expressions to match words that:
+
 #Start and end with the same character.
 str_view("racecar", "^(.).{0,}\\1$")
 
@@ -248,102 +192,107 @@ str_view("church", "(.)(.).{0,}\\1\\2")
 str_view("eleven", "(.).{0,}\\1.{0,}\\1")
 ```
 
-For each of the following challenges, try solving it by using both a single regular expression, and a combination of multiple str_detect() calls.
+## (1-C)
+
+In this section, I use regex and some `stringr` functions to demonstrate how these could be useful in my research. This exercise has been adapted from *R for Data Science*.
 
 ```{r}
-x5 <- c("xylophone", "box", "ball", "aardvark")
 
-#Find all words that start or end with x.
-expect_equal(sum(str_detect(x5, "^x|x$")),
-         sum(str_detect(x5, "^x"), str_detect(x5, "x$"))
-         )
+zxcv <- c("Energy policy is critical, especially battery storage",
+          "Wind energy has increased x-fold in the past year.",
+          "Is nuclear dead? Researchers say no. Fusion is around the corner.",
+          "This sentence has none of the words.")
 
+word_set <- c("[Ee]nergy", "[Pp]olicy", "[Ss]olar", "[Ww]ind", "[Bb]atter(y|ies)", "[Nn]uclear")
 
-#Find all words that start with a vowel and end with a consonant.
-#expect_equal(sum(str_detect(x5, "^[aeiou].+[^aeiou]$")),
- #            sum(if(str_detect(x5, "^[aeiou]") & str_detect(x5, "[^aeiou]$")
-  #                  )
-   #            )
-#)
-NOT_COMPLETE            
+(word_set_match <- str_c(word_set, collapse = "|"))
 
-#Are there any words that contain at least one of each different vowel?
+(has_match <- str_subset(zxcv, word_set_match))
 
+(matched_words <- str_extract_all(has_match, word_set_match))
+
+(matches <- zxcv[str_count(zxcv, word_set_match) >= 1])
+str_view_all(matches, word_set_match)
 
 ```
 
-What word has the highest number of vowels? What word has the highest proportion of vowels? (Hint: what is the denominator?)
+
+# (2) Writing functions
+
+For this prompt, I have written a function that does a linear regression. I will then use this for prompt #6.
+
+The function takes a vector 'A' and fits a linear regression with `lm()` for 'x' and 'y'. `glance()` returns a useful one-row statistical summary from the `broom` package.
 
 ```{r}
-df <- tibble(word = words)
-df %>% 
-  mutate("vowels" = str_count(words, "[aeiou]"))
-
-NOT_COMPLETE
-```
-
-```{r}
-(colours <- c(" red", " orange", " yellow", " green", " blue", " purple"))
-(colour_match <- str_c(colours, collapse = "|"))
-
-(has_colour <- str_subset(sentences, colour_match))
-(matches <- str_extract(has_colour, colour_match))
-
-more <- sentences[str_count(sentences, colour_match) > 1]
-str_view_all(more, colour_match)
-```
-
-From the Harvard sentences data, extract:
-```{r}
-y <- sentences[1]
-(sentence <- str_split(y, " "))
-#str_view(sentence, "ing")
-
-#All words ending in ing.
-#All plurals.
-```
-
-# EXERCISE 2/6
-
-```{r}
-#***************
 linearFit <- function(A, x, y) {
-  fit <- lm(A[[x]] ~ A[[y]], data = A) %>% 
+  fit <- lm(A[[y]] ~ A[[x]], data = A) %>% 
     glance()
 }
-#***************
 
-#Function performs a linear regression and returns the r.squared value
+quadFit <- function(A, x, y) {
+  fit <- lm(A[[y]] ~ A[[x]] + (A[[x]])^2, data = A) %>% 
+    glance()
+}
+
+
+quadFit2 <- function(A) {
+  fit <- lm(lifeExp ~ I(year - 1952) + I((year - 1952)^2), data = A) %>% 
+    glance()
+}
+
 linearFit2 <- function(A) {
   fit <- lm(lifeExp ~ I(year - 1952), data = A) %>% 
     glance()
 }
 
-(linearFit2(gap_nest$data[1:2]))
-#(linearFit(gap_nest[1:2], "lifeExp", "year"))
+#Test function with a simple case:
 
+test_tibble <- tibble(
+  "qwerty" = c(1,2,3),
+  "uiop" = c(4,5,7),
+  "not_used" = c(8,9,11)
+)
+
+r_sq_lm <- lm(qwerty ~ uiop, test_tibble) %>% glance() %>% select("r.squared")
+
+r_sq_linearFit <- (linearFit(test_tibble, "qwerty", "uiop") %>% select("r.squared"))
+
+test_that("Simple case works.",
+          expect_equal(r_sq_linearFit, r_sq_lm)
+          )
+```
+
+
+# (6) Work with a nested data frame
+
+For this prompt, I use the functions built in prompt #2 to fit regression models to life expectancy data in the 'gapminder' dataframe.
+
+```{r}
 #Nest gapminder data by country
 gap_nest <- gapminder %>% nest(-country)
 
 #Fit a linear regression to each country
-(gap_fit <- gap_nest %>% mutate(fit = map(gap_nest$data, linearFit2)))
+(gap_fit <- gap_nest %>% 
+    mutate(fit = map(gap_nest$data, linearFit2))
+)
 
 #Get desired output (r.squared values for each country) in tibble form
 (gap_Rsq <- gap_fit %>% 
     select(country, fit) %>% 
     unnest() %>% 
-  select(country, r.squared)
+    select(country, r.squared)
 )
 
 #Check for countries with less than 10% r.squared value
-filter(gap_Rsq, r.squared < 0.1)
+(filter(gap_Rsq, r.squared < 0.1))
 
 #Create a character string for countries that match <10% r.squared value
-poor_matches <- filter(gap_Rsq, r.squared < 0.1) %>% 
+(poor_matches <- filter(gap_Rsq, r.squared < 0.1) %>% 
   select(country) %>% 
   #lapply(., as.character) %>% 
   unlist() %>% 
   paste(collapse = "|")
+)
 
 #Plot the countries with low r.squared values
 gap_nest %>% unnest() %>%
@@ -359,19 +308,12 @@ gap_nest %>% unnest() %>%
 
 ```{r}
 #Repeat for quadratic regression
-quadFit2 <- function(A) {
-  fit <- lm(lifeExp ~ I(year - 1952) + I((year - 1952)^2), data = A) %>% 
-    glance()
-}
-
-gap_nest <- gapminder %>% nest(-country)
-
 gap_fitQ <- gap_nest %>% mutate(fit = map(gap_nest$data, quadFit2))
 
-gap_RsqQ <- gap_fitQ %>% 
+(gap_RsqQ <- gap_fitQ %>% 
     select(country, fit) %>% 
     unnest() %>% 
-  select(country, r.squared)
+    select(country, r.squared))
 
 #Compare r.squared values of quadratic vs. linear regression
 gap_compare <- gap_RsqQ %>% filter(grepl(poor_matches, country)) %>% 
